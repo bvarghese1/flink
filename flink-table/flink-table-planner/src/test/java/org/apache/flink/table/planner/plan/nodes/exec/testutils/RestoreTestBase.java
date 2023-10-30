@@ -34,6 +34,7 @@ import org.apache.flink.table.planner.factories.TestValuesTableFactory;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNodeMetadata;
 import org.apache.flink.table.planner.plan.utils.ExecNodeMetadataUtil;
+import org.apache.flink.table.test.program.ConfigOptionTestStep;
 import org.apache.flink.table.test.program.SinkTestStep;
 import org.apache.flink.table.test.program.SourceTestStep;
 import org.apache.flink.table.test.program.SqlTestStep;
@@ -82,7 +83,10 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
 
     @Override
     public EnumSet<TestKind> supportedSetupSteps() {
-        return EnumSet.of(TestKind.SOURCE_WITH_RESTORE_DATA, TestKind.SINK_WITH_RESTORE_DATA);
+        return EnumSet.of(
+                TestKind.FUNCTION,
+                TestKind.SOURCE_WITH_RESTORE_DATA,
+                TestKind.SINK_WITH_RESTORE_DATA);
     }
 
     @Override
@@ -151,6 +155,8 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
             sinkTestStep.apply(tEnv, options);
         }
 
+        program.getSetupFunctionTestSteps().forEach(s -> s.apply(tEnv));
+
         final SqlTestStep sqlTestStep = program.getRunSqlTestStep();
 
         final CompiledPlan compiledPlan = tEnv.compilePlanSql(sqlTestStep.sql);
@@ -200,6 +206,8 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
             options.put("sink-insert-only", "false");
             sinkTestStep.apply(tEnv, options);
         }
+
+        program.getSetupFunctionTestSteps().forEach(s -> s.apply(tEnv));
 
         final CompiledPlan compiledPlan =
                 tEnv.loadPlan(PlanReference.fromFile(getPlanPath(program, version)));
