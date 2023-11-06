@@ -91,7 +91,8 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
         return EnumSet.of(
                 TestKind.FUNCTION,
                 TestKind.SOURCE_WITH_RESTORE_DATA,
-                TestKind.SINK_WITH_RESTORE_DATA);
+                TestKind.SINK_WITH_RESTORE_DATA,
+                TestKind.CONFIG);
     }
 
     @Override
@@ -130,16 +131,20 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
                 .set(
                         TableConfigOptions.PLAN_COMPILE_CATALOG_OBJECTS,
                         TableConfigOptions.CatalogPlanCompilation.SCHEMA);
+
+        program.getSetupConfigOptionTestSteps().forEach(config -> config.apply(tEnv));
+
         for (SourceTestStep sourceTestStep : program.getSetupSourceTestSteps()) {
             final String id = TestValuesTableFactory.registerData(sourceTestStep.dataBeforeRestore);
-            final Map<String, String> options = new HashMap<>();
-            options.put("connector", "values");
-            options.put("data-id", id);
-            options.put("terminating", "false");
-            options.put("disable-lookup", "true");
-            options.put("runtime-source", "NewSource");
+            final Map<String, String> options = new HashMap<>(sourceTestStep.options);
+            options.putIfAbsent("connector", "values");
+            options.putIfAbsent("data-id", id);
+            options.putIfAbsent("terminating", "false");
+            options.putIfAbsent("disable-lookup", "true");
+            options.putIfAbsent("runtime-source", "NewSource");
             sourceTestStep.apply(tEnv, options);
         }
+
 
         final List<CompletableFuture<?>> futures = new ArrayList<>();
         for (SinkTestStep sinkTestStep : program.getSetupSinkTestSteps()) {

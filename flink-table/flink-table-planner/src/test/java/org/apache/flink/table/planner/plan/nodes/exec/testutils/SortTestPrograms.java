@@ -19,6 +19,7 @@
 package org.apache.flink.table.planner.plan.nodes.exec.testutils;
 
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecSortLimit;
+import org.apache.flink.table.planner.utils.InternalConfigOptions;
 import org.apache.flink.table.test.program.SinkTestStep;
 import org.apache.flink.table.test.program.SourceTestStep;
 import org.apache.flink.table.test.program.TableTestProgram;
@@ -117,5 +118,44 @@ public class SortTestPrograms {
                                     .consumedAfterRestore("-D[4, b, 8]", "+I[6, c, 10]")
                                     .build())
                     .runSql("INSERT INTO sink_t SELECT * from source_t ORDER BY a DESC LIMIT 3")
+                    .build();
+
+    static final TableTestProgram SORT_ASC =
+            TableTestProgram.of(
+                            "sort-asc",
+                            "validates sort node by sorting integers in asc mode")
+                    .setupConfig(InternalConfigOptions.TABLE_EXEC_NON_TEMPORAL_SORT_ENABLED, true)
+                    .setupTableSource(
+                            SourceTestStep.newBuilder("source_t")
+                                    .addSchema("a INT", "b VARCHAR", "c INT")
+                                    .addOption("terminating", "true")
+                                    .producedBeforeRestore(
+                                            Row.of(2, "a", 6),
+                                            Row.of(4, "b", 8),
+                                            Row.of(6, "c", 10),
+                                            Row.of(1, "a", 5),
+                                            Row.of(3, "b", 7),
+                                            Row.of(5, "c", 9))
+                                    .producedAfterRestore(
+                                            Row.of(2, "a", 6),
+                                            Row.of(4, "b", 8),
+                                            Row.of(6, "c", 10),
+                                            Row.of(1, "a", 5),
+                                            Row.of(3, "b", 7),
+                                            Row.of(5, "c", 9))
+                                    .build())
+                    .setupTableSink(
+                            SinkTestStep.newBuilder("sink_t")
+                                    .addSchema("a INT", "b VARCHAR", "c BIGINT")
+                                    .consumedBeforeRestore(
+                                            "+I[1, a, 5]",
+                                            "+I[2, a, 6]",
+                                            "+I[3, b, 7]",
+                                            "+I[4, b, 8]",
+                                            "+I[5, c, 9]",
+                                            "+I[6, c, 10]")
+                    .consumedAfterRestore("-D[4, b, 8]", "+I[6, c, 10]")
+                                    .build())
+                    .runSql("INSERT INTO sink_t SELECT * from source_t ORDER BY a")
                     .build();
 }
