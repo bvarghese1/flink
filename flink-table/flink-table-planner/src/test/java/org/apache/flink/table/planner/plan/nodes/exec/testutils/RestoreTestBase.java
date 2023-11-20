@@ -201,7 +201,6 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
                         TableConfigOptions.PLAN_RESTORE_CATALOG_OBJECTS,
                         TableConfigOptions.CatalogPlanRestore.IDENTIFIER);
 
-        boolean isTerminatingSource = true;
         for (SourceTestStep sourceTestStep : program.getSetupSourceTestSteps()) {
             final String id = TestValuesTableFactory.registerData(sourceTestStep.dataAfterRestore);
             final Map<String, String> options = new HashMap<>();
@@ -209,16 +208,16 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
             options.put("data-id", id);
             options.put("disable-lookup", "true");
             options.put("runtime-source", "NewSource");
-            sourceTestStep.apply(tEnv, options);
-            if (sourceTestStep.options.getOrDefault("terminating", "true").equals("false")) {
-                isTerminatingSource = false;
+            if (!program.isTerminating()) {
+                options.put("terminating", "false");
             }
+            sourceTestStep.apply(tEnv, options);
         }
 
         final List<CompletableFuture<?>> futures = new ArrayList<>();
 
         for (SinkTestStep sinkTestStep : program.getSetupSinkTestSteps()) {
-            if (!isTerminatingSource) {
+            if (!program.isTerminating()) {
                 final CompletableFuture<Object> future = new CompletableFuture<>();
                 futures.add(future);
                 final String tableName = sinkTestStep.name;
@@ -250,23 +249,22 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
         final CompiledPlan compiledPlan =
                 tEnv.loadPlan(PlanReference.fromFile(getPlanPath(program, metadata)));
 
-        if (!isTerminatingSource) {
+        if (!program.isTerminating()) {
             final TableResult tableResult = compiledPlan.execute();
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
             tableResult.getJobClient().get().cancel().get();
         } else {
             compiledPlan.execute().await();
-        }
-
-        for (SinkTestStep sinkTestStep : program.getSetupSinkTestSteps()) {
-            assertThat(TestValuesTableFactory.getRawResultsAsStrings(sinkTestStep.name))
-                    .containsExactlyInAnyOrder(
-                            Stream.concat(
-                                            sinkTestStep.getExpectedBeforeRestoreAsStrings()
-                                                    .stream(),
-                                            sinkTestStep.getExpectedAfterRestoreAsStrings()
-                                                    .stream())
-                                    .toArray(String[]::new));
+            for (SinkTestStep sinkTestStep : program.getSetupSinkTestSteps()) {
+                assertThat(TestValuesTableFactory.getRawResultsAsStrings(sinkTestStep.name))
+                        .containsExactlyInAnyOrder(
+                                Stream.concat(
+                                                sinkTestStep.getExpectedBeforeRestoreAsStrings()
+                                                        .stream(),
+                                                sinkTestStep.getExpectedAfterRestoreAsStrings()
+                                                        .stream())
+                                        .toArray(String[]::new));
+            }
         }
     }
 

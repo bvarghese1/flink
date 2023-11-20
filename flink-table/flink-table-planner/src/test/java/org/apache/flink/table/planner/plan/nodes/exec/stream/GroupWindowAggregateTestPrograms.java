@@ -68,14 +68,6 @@ public class GroupWindowAggregateTestPrograms {
                     .producedAfterRestore(AFTER_DATA)
                     .build();
 
-    static final SourceTestStep NON_TERMINATING_SOURCE =
-            SourceTestStep.newBuilder("source_t")
-                    .addOption("terminating", "false")
-                    .addSchema(SOURCE.schemaComponents)
-                    .producedBeforeRestore(BEFORE_DATA)
-                    .producedAfterRestore(AFTER_DATA)
-                    .build();
-
     static final TableTestProgram GROUP_TUMBLE_WINDOW_EVENT_TIME =
             TableTestProgram.of(
                             "group-tumble-window-event-time",
@@ -118,7 +110,7 @@ public class GroupWindowAggregateTestPrograms {
             TableTestProgram.of(
                             "group-tumble-window-proc-time",
                             "group by using tumbling window with processing time")
-                    .setupTableSource(NON_TERMINATING_SOURCE)
+                    .setupTableSource(SOURCE)
                     .setupTableSink(
                             SinkTestStep.newBuilder("sink_t")
                                     .addSchema(
@@ -183,7 +175,7 @@ public class GroupWindowAggregateTestPrograms {
             TableTestProgram.of(
                             "group-hop-window-proc-time",
                             "group by using hopping window with processing time")
-                    .setupTableSource(NON_TERMINATING_SOURCE)
+                    .setupTableSource(SOURCE)
                     .setupTableSink(
                             SinkTestStep.newBuilder("sink_t")
                                     .addSchema("name STRING", "cnt BIGINT")
@@ -239,7 +231,7 @@ public class GroupWindowAggregateTestPrograms {
             TableTestProgram.of(
                             "group-session-window-proc-time",
                             "group by using session window with processing time")
-                    .setupTableSource(NON_TERMINATING_SOURCE)
+                    .setupTableSource(SOURCE)
                     .setupTableSink(
                             SinkTestStep.newBuilder("sink_t")
                                     .addSchema("name STRING", "cnt BIGINT")

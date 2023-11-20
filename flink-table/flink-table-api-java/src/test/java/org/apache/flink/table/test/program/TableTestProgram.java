@@ -95,12 +95,15 @@ public class TableTestProgram {
     /** Steps to be executed for running the actual test. */
     public final List<TestStep> runSteps;
 
+    private boolean isTerminating;
+
     private TableTestProgram(
             String id, String description, List<TestStep> setupSteps, List<TestStep> runSteps) {
         this.id = id;
         this.description = description;
         this.setupSteps = setupSteps;
         this.runSteps = runSteps;
+        this.isTerminating = true;
     }
 
     @Override
@@ -182,6 +185,14 @@ public class TableTestProgram {
                 runSteps.size() == 1 && runSteps.get(0).getKind() == TestKind.SQL,
                 "Single SQL step expected.");
         return (SqlTestStep) runSteps.get(0);
+    }
+
+    public boolean isTerminating() {
+        return isTerminating;
+    }
+
+    public void setTerminating(boolean terminating) {
+        isTerminating = terminating;
     }
 
     /** Builder pattern for {@link TableTestProgram}. */
