@@ -81,9 +81,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class RestoreTestBase implements TableTestProgramRunner {
 
     private final Class<? extends ExecNode> execNodeUnderTest;
+    private final AfterRestoreState afterRestoreState;
 
     protected RestoreTestBase(Class<? extends ExecNode> execNodeUnderTest) {
         this.execNodeUnderTest = execNodeUnderTest;
+        this.afterRestoreState = AfterRestoreState.FINITE_AFTER_RESTORE;
+    }
+
+    protected RestoreTestBase(
+            Class<? extends ExecNode> execNodeUnderTest, AfterRestoreState state) {
+        this.execNodeUnderTest = execNodeUnderTest;
+        this.afterRestoreState = state;
+    }
+
+    protected enum AfterRestoreState {
+        FINITE_AFTER_RESTORE,
+        INFINITE_AFTER_RESTORE
     }
 
     @Override
@@ -208,7 +221,7 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
             options.put("data-id", id);
             options.put("disable-lookup", "true");
             options.put("runtime-source", "NewSource");
-            if (!program.isTerminating()) {
+            if (afterRestoreState == AfterRestoreState.INFINITE_AFTER_RESTORE) {
                 options.put("terminating", "false");
             }
             sourceTestStep.apply(tEnv, options);
@@ -217,7 +230,7 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
         final List<CompletableFuture<?>> futures = new ArrayList<>();
 
         for (SinkTestStep sinkTestStep : program.getSetupSinkTestSteps()) {
-            if (!program.isTerminating()) {
+            if (afterRestoreState == AfterRestoreState.INFINITE_AFTER_RESTORE) {
                 final CompletableFuture<Object> future = new CompletableFuture<>();
                 futures.add(future);
                 final String tableName = sinkTestStep.name;
@@ -249,7 +262,7 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
         final CompiledPlan compiledPlan =
                 tEnv.loadPlan(PlanReference.fromFile(getPlanPath(program, metadata)));
 
-        if (!program.isTerminating()) {
+        if (afterRestoreState == AfterRestoreState.INFINITE_AFTER_RESTORE) {
             final TableResult tableResult = compiledPlan.execute();
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
             tableResult.getJobClient().get().cancel().get();

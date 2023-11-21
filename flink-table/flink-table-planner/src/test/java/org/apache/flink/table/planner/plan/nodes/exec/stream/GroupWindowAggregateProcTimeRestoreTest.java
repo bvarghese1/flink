@@ -25,24 +25,18 @@ import java.util.Arrays;
 import java.util.List;
 
 /** Restore tests for {@link StreamExecGroupWindowAggregate}. */
-public class GroupWindowAggregateRestoreTest extends RestoreTestBase {
+public class GroupWindowAggregateProcTimeRestoreTest extends RestoreTestBase {
 
-    public GroupWindowAggregateRestoreTest() {
-        super(StreamExecGroupWindowAggregate.class);
+    public GroupWindowAggregateProcTimeRestoreTest() {
+        super(StreamExecGroupWindowAggregate.class, AfterRestoreState.INFINITE_AFTER_RESTORE);
     }
 
     @Override
     public List<TableTestProgram> programs() {
-        GroupWindowAggregateTestPrograms.GROUP_TUMBLE_WINDOW_PROC_TIME.setTerminating(false);
-        GroupWindowAggregateTestPrograms.GROUP_HOP_WINDOW_PROC_TIME.setTerminating(false);
-        GroupWindowAggregateTestPrograms.GROUP_SESSION_WINDOW_PROC_TIME.setTerminating(false);
 
         return Arrays.asList(
-                GroupWindowAggregateTestPrograms.GROUP_TUMBLE_WINDOW_EVENT_TIME,
                 GroupWindowAggregateTestPrograms.GROUP_TUMBLE_WINDOW_PROC_TIME,
-                GroupWindowAggregateTestPrograms.GROUP_HOP_WINDOW_EVENT_TIME,
                 GroupWindowAggregateTestPrograms.GROUP_HOP_WINDOW_PROC_TIME,
-                GroupWindowAggregateTestPrograms.GROUP_SESSION_WINDOW_EVENT_TIME,
                 GroupWindowAggregateTestPrograms.GROUP_SESSION_WINDOW_PROC_TIME);
     }
 }
