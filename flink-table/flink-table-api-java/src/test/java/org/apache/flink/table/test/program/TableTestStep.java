@@ -56,7 +56,8 @@ public abstract class TableTestStep implements TestStep {
 
     public TableResult apply(TableEnvironment env, Map<String, String> extraOptions) {
         final Map<String, String> allOptions = new HashMap<>(options);
-        allOptions.putAll(extraOptions);
+        extraOptions.forEach((key, value) -> {allOptions.putIfAbsent(key, value);});
+        //allOptions.putAll(extraOptions);
 
         final String partitionedBy =
                 partitionKeys.isEmpty()

@@ -44,6 +44,7 @@ import org.apache.flink.test.junit5.MiniClusterExtension;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -103,6 +104,7 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
     public EnumSet<TestKind> supportedSetupSteps() {
         return EnumSet.of(
                 TestKind.FUNCTION,
+                TestKind.SOURCE_WITH_DATA,
                 TestKind.SOURCE_WITH_RESTORE_DATA,
                 TestKind.SINK_WITH_RESTORE_DATA);
     }
@@ -162,6 +164,7 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
             TestValuesTableFactory.registerLocalRawResultsObserver(
                     tableName,
                     (integer, strings) -> {
+                        System.out.println(TestValuesTableFactory.getRawResultsAsStrings(tableName));
                         final boolean shouldTakeSavepoint =
                                 CollectionUtils.isEqualCollection(
                                         TestValuesTableFactory.getRawResultsAsStrings(tableName),
@@ -198,6 +201,7 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
         Files.move(savepointPath, savepointDirPath, StandardCopyOption.ATOMIC_MOVE);
     }
 
+    //@Disabled
     @ParameterizedTest
     @MethodSource("createSpecs")
     void testRestore(TableTestProgram program, ExecNodeMetadata metadata) throws Exception {
@@ -237,6 +241,7 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
                 TestValuesTableFactory.registerLocalRawResultsObserver(
                         tableName,
                         (integer, strings) -> {
+                            System.out.println(TestValuesTableFactory.getRawResultsAsStrings(tableName));
                             List<String> results = new ArrayList<>();
                             results.addAll(sinkTestStep.getExpectedBeforeRestoreAsStrings());
                             results.addAll(sinkTestStep.getExpectedAfterRestoreAsStrings());
